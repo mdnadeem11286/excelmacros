@@ -1,0 +1,93 @@
+Sub atest1()
+
+
+Dim s As String, piece As String, i As Long, j As Long
+Dim CheckGSC As Workbook
+Dim rng As Range
+Dim sht1 As Worksheet
+Dim sht2 As Worksheet
+Dim Arow As Long
+Dim TotArow As Long
+Dim prev As ListObject
+Dim actrng As Range
+Dim dps As String
+
+
+Set sht1 = Worksheets("After Removing Duplicates")
+'get the total rows
+LastRowNum = sht1.Range("A" & Rows.Count).End(xlUp).Row
+Set actrng = sht1.Range(Cells(2, 4), Cells(LastRowNum, 4))
+
+m = 2
+s = ""
+piece = ""
+rstring = ""
+i = 0
+For Each msg1 In actrng
+    If msg1 = "Actioned by TTO" Then
+        s = sht1.Cells(m, 7)
+        'i = InStr(s, " ,")
+        'fstring = Left(s, i - 1)
+           'rstring = rstring + Left(fstring, Len(fstring) - 3) & ","
+        Do While (Len(s) > i)
+           i = InStr(s, " ,")
+            If (Len(s) > i + 1) Then
+              fstring = Left(s, i - 1)
+               If fstring <> nstring Then
+                   rstring = rstring & Left(fstring, Len(fstring) - 3) & ","
+               End If
+              s = Right(s, (Len(s) - i - 1))
+              j = InStr(s, " ,")
+              nstring = Left(s, j - 1)
+                If fstring <> nstring Then
+                   rstring = rstring & Left(nstring, Len(nstring) - 3) & ","
+                   If (Len(s) > j) Then
+                         s = Right(s, Len(s) - j - 1)
+                   End If
+                Else
+                  If (Len(s) > j) Then
+                         s = Right(s, Len(s) - j - 1)
+                   End If
+         
+                End If
+              Else
+               Exit Do
+            End If
+            
+              
+                If Len(s) < 1 Then
+                   Exit Do
+                End If
+            
+                       
+           
+        Loop
+            If (Len(s) > 1) Then
+             fstring = s
+              rstring = rstring & Left(fstring, Len(fstring) - 5)
+              
+              End If
+              'rstring = rstring & "," & nstring
+            If (Right(rstring, 1) = ",") Then
+             rstring = Left(rstring, Len(rstring) - 1)
+            End If
+                        
+            'MsgBox Right(rstring, 1)
+            sht1.Range("H" & m) = rstring
+                        
+      End If
+      
+   m = m + 1
+  s = ""
+  fstring = ""
+  nstring = ""
+  rstring = ""
+Next msg1
+
+
+
+
+
+
+
+End Sub
