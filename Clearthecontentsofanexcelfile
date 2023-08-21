@@ -1,0 +1,24 @@
+'To clear the formats and saved Data if needed
+Sub ClearContentsfromthesheet()
+Dim macwb As Workbook
+
+'set the current Macro file workbook for a variable
+Set macwb = Workbooks("ExecLangDist.xlsm")
+'Set macwb = Workbooks("27th October-2022 INC Backlogs- To edit macros")
+
+macwb.Sheets("ITask").Activate
+Cells.ClearContents
+ Cells.ClearFormats
+
+macwb.Sheets("RawData").Activate
+Cells.ClearContents
+Cells.Validation.Delete
+Cells.ClearFormats
+
+'remove added columns
+
+'Columns("A:M").Select
+'Selection.Delete
+
+
+End Sub
