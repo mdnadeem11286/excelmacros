@@ -1,0 +1,131 @@
+Sub atest()
+Dim s As String, piece As String
+Dim CheckGSC As Workbook
+Dim rng As Range
+Dim sht1 As Worksheet
+Dim sht2 As Worksheet
+Dim Arow As Long
+Dim TotArow As Long
+Dim prev As ListObject
+Dim actrng As Range
+Dim dps As String
+Dim i As Integer, j As Integer
+
+
+Set sht1 = Worksheets("Worknote")
+Set sht2 = Worksheets("TTO Agents")
+
+
+
+'To get the last Row
+LastRowNum = sht1.Range("A" & Rows.Count).End(xlUp).Row
+
+'Another way to check last Row
+'lRow = macwb.Sheets("RawData").Range("A1048576").End(xlUp).Row
+
+If LastRowNum < 3 Then
+   MsgBox "There are no adequate rows"
+   Exit Sub
+End If
+
+
+'To get the last Col
+LastColNum = Cells(1, Columns.Count).End(xlToLeft).Column
+colNum = WorksheetFunction.Match("Worknotes", sht1.Range("1:1"), 0)
+Set rng = Range(Cells(2, colNum), Cells(LastRowNum, colNum))
+Set actrng = Range(Cells(2, 4), Cells(LastRowNum, 4))
+
+
+
+TotArow = sht2.Range("A" & Rows.Count).End(xlUp).Row
+
+m = 2
+
+
+For Each msg In rng
+       s = msg
+    Do While Len(s) > 1
+           If (Len(s) < 1) Then
+           Exit Sub
+           End If
+            'initial string delimiter
+             i = InStr(s, "- ")
+             'End Delimiter
+             j = InStr(s, "(Work notes)")
+
+     'Take the complete left into a variable excluding the variable
+            If i <= 0 Then
+            Exit Do
+            End If
+      Leftstring = Left(s, i - 1)
+      'From the left side check right before the name place the 18 characters into another variable.
+      Rightstring = Right(Leftstring, 18)
+
+        ChekDate = IsDate(Rightstring)
+
+        If ChekDate = True Then
+            piece = Trim(Mid(s, i + 1, j - i - 1))
+        
+             'Range("F" & m) = piece
+           
+                 sht1.Range("C" & m) = sht1.Range("C" & m) & piece & ", "
+                 sht1.Range("E" & m) = sht1.Range("E" & m) & Rightstring & ","
+                   D = Month(Date) - 1
+             If (Month(Rightstring) = D) Then
+                 sht1.Range("G" & m) = sht1.Range("G" & m) & piece & Day(Rightstring) & Month(Rightstring) & " ,"
+             End If
+             'sht2.Activate
+                If sht1.Range("D" & m).Value = "" Then
+                  For Arow = 2 To TotArow
+                     If sht2.Cells(Arow, 1).Value = piece Then
+                     'MsgBox "GSC Agent " & piece & " worked on the ticket"
+                     sht1.Range("D" & m) = "Actioned by TTO"
+                     'sht1.Range("E" & m) = RightString
+                     sht1.Range("F" & m) = piece
+                   Exit For
+                    End If
+                   Next
+                 End If
+              
+        s = Right(s, Len(s) - j - 13)
+        End If
+        
+         If ChekDate = False Then
+            s = Right(s, Len(s) - i - 1)
+          End If
+          i = InStr(s, "- ")
+          If i = 0 Then
+            Exit Do
+           End If
+  
+  Leftstring = Left(s, i - 1)
+  Rightstring = Right(Leftstring, 18)
+  ChekDate = IsDate(Rightstring)
+   Loop
+m = m + 1
+Next msg
+
+
+m = 2
+s = ""
+piece = ""
+i = 0
+j = 0
+
+
+
+
+
+
+m = 0
+
+
+End Sub
+
+
+'***********************
+
+
+
+
+
