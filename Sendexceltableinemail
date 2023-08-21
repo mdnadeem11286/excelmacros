@@ -1,0 +1,101 @@
+Sub SendDailyRoster()
+Dim outEmail As Object
+Dim outApp As Object
+Dim dt As Date
+Dim Firsthalf As Range
+Dim Secondhalf As Range
+Dim FinalTable As Range
+Dim datechecked As Long
+Dim str1 As String
+Dim str2 As String
+Dim dayName As String
+
+'Create an Outlook Object
+Set outApp = CreateObject("Outlook.Application")
+
+'Create an outlook email item
+Set outEmail = outApp.createItem(0)
+
+'Use a variable to store next working date to be used in the Subject line
+'you can also use direct formula instead of the variable
+
+If Weekday(Date) = 6 Then
+dt = DateAdd("d", 3, Date)
+dayName = WeekdayName(5)
+Else
+dt = DateAdd("d", 1, Date)
+
+End If
+
+
+'LastRowNum = macwb.Worksheets("RawData").Range("A" & Rows.Count).End(xlUp).Row
+
+LastRowNum = Range("A" & Rows.Count).End(xlUp).Row
+
+'to print and check in the immediate window CONTROL +G
+'Debug.Print (dt)
+
+'Set First Half of the Table to be displayed without the Tomorrow roster timing.
+'Only names, task, ID, Work location, Avaya Agent ID
+Set Firsthalf = Worksheets("Novembr").Range(Cells(1, 4), Cells(LastRowNum, 8))
+
+'setting the colum number to be 0 to avoid error.
+datechecked = 0
+
+
+'this is to check which columm has today's date so this can be comined with first half
+For Each cell In Worksheets("Novembr").Range(Cells(6, 1), Cells(6, 48))
+  If cell.Value = Date Then
+     'check if it is a Friday then set the column number after 3 days
+       If Weekday(cell.Value) = 6 Then
+             datechecked = cell.Column + 3
+        Exit For
+       End If
+    'if its any other day, then colum number is set after 1 day
+      datechecked = cell.Column + 1
+      Exit For
+  End If
+Next cell
+
+
+On Error Resume Next
+'Setting second half of the table
+'Set Secondhalf = Worksheets("Novembr").Range(Cells(1, datechecked), Cells(LastRowNum, datechecked))
+Set Secondhalf = Range(Cells(1, datechecked), Cells(LastRowNum, datechecked))
+
+'Creating final table by combining 2 ranges using UNION function
+ Set FinalTable = Union(Firsthalf, Secondhalf)
+ 
+ On Error GoTo 0
+ 
+
+'Adding Some lines to the email body
+str1 = "<body style =Font-size:12pt;font-family:Calibri>" & _
+"Hello Team, <br><br> Please see English GSC TTO team's Roster for <B>" & WeekdayName(Weekday(dt) - 1) & " " & dt & "</B> below:<br><br> Those who are scheduled as per the report must login without fail, otherwise, it will considered as UPL. <br><br>"
+
+'Adding my signature
+str2 = "<br> Best Regards <br> Mohammed Nadeem <br> Tech Lead GSC"
+
+'checking error to avoid error displays
+On Error Resume Next
+'Set Email attributes to, cc, bcc, send and HTMLbody function etc
+With outEmail
+'email addresses to send
+       .To = "LPrakash.Ranjit@cognizant.com;SanoobMohanlal.RR@cognizant.com;MirShahid.Bashir@cognizant.com;vukkadapu.harshitha@cognizant.com;thejaswini.g@cognizant.com;anil.buram@cognizant.com;darshini.m.m@cognizant.com;shaik.zaiba2@cognizant.com; Mondeep.Chowdhury@cognizant.com; KaranMahesh.Chugh@cognizant.com; Harshita.Dubey@cognizant.com; AdithyaVardhini.G@cognizant.com; Thouseef.I@cognizant.com; Harshvardhan.Jamdhade@cognizant.com; Sushmitha.K@cognizant.com;Payal.Kumari3@cognizant.com; Akhil.M2@cognizant.com; RamaKrishnaReddy.Mula@cognizant.com;KaneMario.Netto@cognizant.com; SurajKumar.R@cognizant.com;Pragati.Singh3@cognizant.com;Shazia.Tarannum@cognizant.com"
+       .cc = "mohammed.nadeem3@cognizant.com;Mohd.Touheed@cognizant.com;"
+       .bcc = ""
+       .Subject = "GSC TTO team's Roster for " & WeekdayName(Weekday(dt) - 1) & " " & dt
+       .HTMLBODY = str1 & RangetoHTML(FinalTable) & str2 & .HTMLBODY
+        .Display
+End With
+On Error GoTo 0
+
+
+
+
+'Clearing the objects
+Set outApp = Nothing
+Set outEmail = Nothing
+
+
+End Sub
