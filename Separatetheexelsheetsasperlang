@@ -1,0 +1,217 @@
+'Distribute the Sheets and create as per the language
+Sub filter()
+Application.ScreenUpdating = False
+
+Dim x As Range
+Dim rng As Range
+Dim last As Long
+'Dim sht As String
+Dim Rawdata As Range
+Dim macwb As Workbook
+Dim reswb As Workbook
+Dim storelangcount As Long
+Dim str As String
+Dim UniqueLangRange As Collection
+'Dim lRow As Integer
+Dim checkifpresent As Boolean
+Dim HeadrRange As Range
+
+
+'set the current Macro file workbook for a variable
+Set macwb = Workbooks("ExecLangDist.xlsm")
+'Set macwb = Workbooks("27th October-2022 INC Backlogs- To edit macros")
+
+macwb.Sheets("RawData").Activate
+
+'To get the last Row
+LastRowNum = macwb.Worksheets("RawData").Range("A" & Rows.Count).End(xlUp).Row
+
+'Another way to check last Row
+'lRow = macwb.Sheets("RawData").Range("A1048576").End(xlUp).Row
+
+If LastRowNum < 3 Then
+   MsgBox "There are no adequate rows"
+   Exit Sub
+End If
+
+'To get the last Row
+LastColNum = macwb.Worksheets("RawData").Cells(1, macwb.Worksheets("RawData").Columns.Count).End(xlToLeft).Column
+
+'Check if Vlookup has been run or not
+If LastColNum < 25 Then
+MsgBox "Please update all the columns first by Clicking on Vlookup Macro"
+Exit Sub
+End If
+
+
+
+'Another method to get the number of rows
+last = macwb.Sheets("RawData").Cells(Rows.Count, "A").End(xlUp).Row
+
+'To get the column number which has Language column
+colNum = WorksheetFunction.Match("Language", macwb.Sheets("RawData").Range("1:1"), 0)
+
+
+'Name the new file with the required name
+str = macwb.Sheets("RawData").Range("AF8")
+
+'crete a new excel file
+Set reswb = Workbooks.Add
+
+On Error Resume Next
+reswb1.SaveAs Date & " INC Baclog Tickets.xlsx"
+
+
+'Rename the existing sheet with the rawdata name
+reswb.Sheets(1).Name = "RawData"
+
+
+'Copy the RawData from source to Destination
+macwb.Sheets("RawData").Range("A1:AD" & LastRowNum).Copy reswb.Sheets("RawData").Range("A1")
+
+
+
+'change filter column in the following code
+Set rng = macwb.Sheets("RawData").Range("A1:AD" & last)
+
+'Applying advanced filter to and moving the unique languages in the BA column
+macwb.Sheets("RawData").Range("Q1:Q" & last).AdvancedFilter Action:=xlFilterCopy, CopyToRange:=Range("BA1"), Unique:=True
+
+'keeping the total language count in a variable
+'storelangcount = macwb.Sheets("RawData").Range([BA1], Cells(Rows.Count, "BA").End(xlUp)).Count
+
+'check each language in BA column and then apply the filter to RawData
+For Each x In Range([BA1], Cells(Rows.Count, "BA").End(xlUp))
+With rng
+.AutoFilter
+.AutoFilter Field:=colNum, Criteria1:=x.Value
+.SpecialCells(xlCellTypeVisible).Copy
+
+
+'Check the language and then move the Row to respective language sheet
+On Error Resume Next
+If x.Value <> "Language" Then
+If x.Value <> "English" Then
+  If x.Value <> "Czech" Then
+    If x.Value <> "Polish" Then
+       If x.Value <> Empty Then
+       'Check the total sheets count
+        'If Sheets.Count < Range([BA1], Cells(Rows.Count, "BA")) Then
+          checkifpresent = SheetCheck(x.Value)
+          If checkifpresent = False Then
+                    reswb.Sheets.Add(After:=reswb.Sheets(Sheets.Count)).Name = x.Value
+                    reswb.Sheets(x.Value).Paste
+                    End If
+           'End If
+        End If
+       End If
+    End If
+  End If
+End If
+End With
+Next x
+
+
+
+' Turn off filter
+Sheets(sht).AutoFilterMode = False
+
+With Application
+.CutCopyMode = False
+.ScreenUpdating = True
+End With
+
+
+On Error GoTo ErrorHandler
+
+'Remove the ColumnData that has the filters.
+reswb.Sheets("RawData").Columns("BA").Delete
+
+'clear the objects
+macwb.Sheets("RawData").ShowAllData
+macwb.Save
+
+On Error GoTo ErrorHandler
+reswb.Save
+
+'macwb.Close SaveChanges:=False
+    Set macwb = Nothing
+    Set reswb = Nothing
+    
+    Exit Sub
+ErrorHandler:
+MsgBox "Some error occured, Check if the Backlog file already opened"
+    
+End Sub
+
+
+Function GetWorksheet(shtName As String) As Worksheet
+    On Error Resume Next
+    Set GetWorksheet = Worksheets(shtName)
+End Function
+
+
+Function SheetCheck(sheet_name As String) As Boolean
+
+Dim ws As Worksheet
+
+SheetCheck = False
+ 
+For Each ws In ThisWorkbook.Worksheets
+ 
+    If ws.Name = sheet_name Then
+          SheetCheck = True
+        
+    End If
+ 
+Next ws
+ 
+End Function
+
+
+'call a function to return unique language items
+
+Public Function CollectUniques(rng As Range) As Collection
+    
+    Dim varArray As Variant, var As Variant
+    Dim col As Collection
+    
+    'Guard clause - if Range is nothing, return a Nothing collection
+    'Guard clause - if Range is empty, return a Nothing collection
+    If rng Is Nothing Or WorksheetFunction.CountA(rng) = 0 Then
+        Set CollectUniques = col
+        Exit Function
+    End If
+        
+    If rng.Count = 1 Then '<~ check for a single cell range
+        Set col = New Collection
+        col.Add Item:=CStr(rng.Value), Key:=CStr(rng.Value)
+    Else '<~ otherwise the range contains multiple cells
+        
+        'Convert the passed-in range to a Variant array for SPEED and bind the Collection
+        varArray = rng.Value
+        Set col = New Collection
+        
+        'Ignore errors temporarily, as each attempt to add a repeat
+        'entry to the collection will cause an error
+        On Error Resume Next
+        
+            'Loop through everything in the variant array, adding
+            'to the collection
+            For Each var In varArray
+                col.Add Item:=CStr(var), Key:=CStr(var)
+             Next var
+    
+        On Error GoTo 0
+    End If
+        
+    
+    'Return the contains-uniques-only collection
+    
+    Set CollectUniques = col
+    
+    
+End Function
+
+
+
