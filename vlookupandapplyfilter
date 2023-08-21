@@ -1,0 +1,181 @@
+Sub Vlookupitask()
+'
+' Vlookupitask Macro
+'
+
+'
+Dim macwb As Workbook
+Dim LastRowNum As Long
+Dim LTaskRow As Integer
+
+
+
+'set the current Macro file workbook for a variable
+Set macwb = Workbooks("ExecLangDist.xlsm")
+'Set macwb = Workbooks("27th October-2022 INC Backlogs- To edit macros")
+macwb.Sheets("RawData").Activate
+
+
+
+'To get the last Row
+LastRowNum = macwb.Worksheets("RawData").Range("A" & Rows.Count).End(xlUp).Row
+
+'Another way to check last Row
+'lRow = macwb.Sheets("RawData").Range("A1048576").End(xlUp).Row
+
+If LastRowNum < 3 Then
+   MsgBox "There are no adequate rows"
+   Exit Sub
+End If
+
+
+'Adding Created Aging, Created Aging Range, Updated Aging and Updated Aging range
+
+  Columns("S:S").Select
+    Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("S1").Select
+    ActiveCell.FormulaR1C1 = "Created Aging"
+    Range("S2").Select
+    Application.CutCopyMode = False
+    
+    'Updated Aging using the formula today - the date
+    
+    Selection.FormulaR1C1 = "=TODAY()-RC[-8]"
+    Selection.NumberFormat = "0"
+    
+    'Selecting the top header and then right click to insert a new column copy the prev format.
+    
+    Columns("T:T").Select
+    Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("T1").Select
+        ActiveCell.FormulaR1C1 = "Created Aging Range"
+    Range("T2").Select
+    
+    'Created aging range creation
+    
+    Selection.FormulaR1C1 = _
+        "=IF(RC[-1]<1,""Same Day"",IF(RC[-1]<=3,""1 - 3 days"",IF(RC[-1]<=7,"" 4 - 7 days"",IF(RC[-1]<=14,""7 - 14 days"",IF(RC[-1]<=20,""15 - 20 days"",IF(RC[-1]>20,"">20 days"",))))))"
+    Columns("U:U").Select
+    Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("U1").Select
+    ActiveCell.FormulaR1C1 = "Updated Aging"
+    Range("U2").Select
+    Application.CutCopyMode = False
+    
+     'Updated Aging using the formula today - the date
+    ActiveCell.FormulaR1C1 = "=TODAY()-RC[-9]"
+    Columns("V:V").Select
+    Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("V1").Select
+    ActiveCell.FormulaR1C1 = "Updated Aging Range"
+    Range("V2").Select
+    
+    'Update the range using the formula
+    Selection.FormulaR1C1 = _
+        "=IF(RC[-1]<1,""Same Day"",IF(RC[-1]<=3,""1 - 3 days"",IF(RC[-1]<=7,"" 4 - 7 days"",IF(RC[-1]<=14,""7 - 14 days"",IF(RC[-1]<=20,""15 - 20 days"",IF(RC[-1]>20,"">20 days"",))))))"
+    
+    'Add Task related columns
+    Columns("W:W").Select
+    Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("W1").Select
+    ActiveCell.FormulaR1C1 = "Task No"
+    
+     Columns("X:X").Select
+    Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("X1").Select
+    ActiveCell.FormulaR1C1 = "Task State"
+    
+    
+    Columns("Y:Y").Select
+    Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("Y1").Select
+    ActiveCell.FormulaR1C1 = "Itask Assigned Group"
+    
+      
+    'Get the Last Task Row for Vlookup
+    LTaskRow = macwb.Worksheets("Itask").Range("A" & Rows.Count).End(xlUp).Row
+
+   
+   'selecting the Column that needs Task number
+    Range("W2").Select
+        
+    'Use Xlookup spill option to fill the Task Number, Task State and Task Assignment group in the Raw Data.
+    ActiveCell.Formula2R1C1 = _
+     "=XLOOKUP(RC[-22],ITask!R2C1:R" & LTaskRow & "C1,CHOOSE({1,2,3},ITask!R2C2:R" & LTaskRow & "C2,ITask!R2C4:R" & LTaskRow & "C4,ITask!R2C6:R" & LTaskRow & "C6))"
+     
+     
+        
+    'Adding TTO columns such as Allocated agent
+    
+    Columns("AA:AA").Select
+    Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("AA1").Font.Bold = True
+    Range("AA1").Select
+    ActiveCell.FormulaR1C1 = "Allocated Agent"
+    
+    
+    Columns("AB:AB").Select
+    Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("AB1").Select
+    Range("AB1").Font.Bold = True
+    ActiveCell.FormulaR1C1 = "State"
+    
+    
+    'Creating the dropdown for state
+    Range("AB2").Select
+    With Selection.Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _
+        xlBetween, Formula1:= _
+        "Resolved, Cancelled, Not Attempted, Awaiting Additional Info /Strike 1, Awaiting confirmation /Strike 1, Routed to Other+$2:$2Towers, Awaiting Additional Info /Strike2, Awaiting Confirmation /Strike 2, Task pending with Tier-2, User OOO, New"
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .InputTitle = "Status"
+        .ErrorTitle = "Incorrect input Value"
+        .InputMessage = "Choose from the Dropdown"
+        .ErrorMessage = "Please choose only from the dropdown"
+        .ShowInput = True
+        .ShowError = True
+    End With
+    
+    Columns("AC:AC").Select
+    Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("AC1").Font.Bold = True
+    Range("AC1").Select
+    ActiveCell.FormulaR1C1 = "Comments"
+    
+    Columns("AD:AD").Select
+    Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("AD1").Font.Bold = True
+    Range("AD1").Select
+    ActiveCell.FormulaR1C1 = "Aging Reason"
+    
+    'From the botton row, filling the Data along with Formulas from the first row until Task details
+    Range("R2").Select
+    Selection.End(xlDown).Select
+    LRownumb = Selection.Row
+    Range("S" & LRownumb).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range("S2:Y" & LRownumb).Select
+    'Range("S" & LRownumb).Activate
+    Selection.FillDown
+    
+    'From the botton row, filling the TTO Dropdowns along with Formulas from the first row
+    Range("AA" & LRownumb).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Range("AA2:AB" & LRownumb).Select
+    Range("AA" & LRownumb).Activate
+    Selection.FillDown
+    
+    
+    'Removing formulas by copying and pasting only the values from the data
+      Range("S2:Y" & LRownumb).Select
+     ' Range("Y" & LRownumb).Activate
+    Selection.Copy
+    Selection.PasteSpecial Paste:=xlPasteValuesAndNumberFormats, Operation:= _
+        xlNone, SkipBlanks:=False, Transpose:=False
+   
+   
+    Range("A1").Activate
+   
+End Sub
